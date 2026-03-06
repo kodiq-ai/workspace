@@ -74,7 +74,7 @@ export function BugReportDialog() {
     setSubmitState("loading");
 
     try {
-      const meta = [`**App:** Kodiq IDE v${__APP_VERSION__}`, `**OS:** ${navigator.platform}`].join(
+      const meta = [`**App:** Kodiq Workspace v${__APP_VERSION__}`, `**OS:** ${navigator.platform}`].join(
         "\n",
       );
 

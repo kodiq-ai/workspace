@@ -151,7 +151,7 @@
   "updateReady": "is ready to install",
   "viewDetails": "View details",
   "onboardingWelcome": "Welcome to Kodiq",
-  "onboardingWelcomeDesc": "AI Terminal IDE for developers",
+  "onboardingWelcomeDesc": "AI Workspace for developers",
   "onboardingCliTitle": "Your AI Tools",
   "onboardingCliDesc": "We found these CLI tools on your system",
   "onboardingCliInstall": "Install",

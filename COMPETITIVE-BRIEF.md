@@ -2,7 +2,7 @@
 
 **Дата:** 15 февраля 2026
 **Цель:** Product strategy — определить позиционирование, приоритеты функционала и дифференциацию
-**Категория:** AI Terminal / IDE-wrapper для AI CLI инструментов
+**Категория:** AI Terminal / Workspace-wrapper для AI CLI инструментов
 
 ---
 
@@ -171,7 +171,7 @@ Rust-based терминал на базе кода Alacritty. Красивый, 
 
 **Предлагаемое позиционирование:**
 
-> **Kodiq — open-source desktop IDE для AI-эры.**
+> **Kodiq — open-source desktop Workspace для AI-эры.**
 > Запускай Claude Code, Gemini CLI, Codex, Aider и Ollama в одном окне.
 > Переключайся между AI-агентами как между вкладками браузера.
 > Видь результаты в live preview. Никаких API-ключей. Работает оффлайн.

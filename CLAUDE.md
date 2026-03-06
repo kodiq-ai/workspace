@@ -1,4 +1,4 @@
-# Kodiq App — AI Terminal IDE
+# Kodiq App — AI Workspace
 
 Tauri 2 desktop app: Rust backend + React 19 frontend. Dark-only, English/Russian UI.
 
