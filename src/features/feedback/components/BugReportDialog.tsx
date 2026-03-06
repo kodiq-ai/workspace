@@ -74,9 +74,10 @@ export function BugReportDialog() {
     setSubmitState("loading");
 
     try {
-      const meta = [`**App:** Kodiq Workspace v${__APP_VERSION__}`, `**OS:** ${navigator.platform}`].join(
-        "\n",
-      );
+      const meta = [
+        `**App:** Kodiq Workspace v${__APP_VERSION__}`,
+        `**OS:** ${navigator.platform}`,
+      ].join("\n");
 
       const suffix = `\n\n---\n${meta}`;
       // Trim user description so total stays within API 4000 char limit
