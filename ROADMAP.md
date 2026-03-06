@@ -129,7 +129,7 @@ Estimated: 2-3 weeks after v0.3.0.
 
 ## Later — Ecosystem & Pro
 
-Features that connect Kodiq IDE with Academy and monetization. No fixed timeline.
+Features that connect Kodiq Workspace with Academy and monetization. No fixed timeline.
 
 ### Easy Deploy
 - [ ] "Publish" button in toolbar — deploy current project to web
@@ -153,7 +153,7 @@ Features that connect Kodiq IDE with Academy and monetization. No fixed timeline
 - [ ] Supabase Auth (email, GitHub OAuth, Google OAuth)
 - [ ] Settings sync (SQLite ↔ Supabase)
 - [ ] Cloud deploy (Vercel/Netlify integration)
-- [ ] Academy progress integration (show course progress in IDE)
+- [ ] Academy progress integration (show course progress in Workspace)
 - [ ] Team workspaces
 
 ---

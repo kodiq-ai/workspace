@@ -2,7 +2,7 @@
 language: 'ru-RU'
 early_access: true
 enable_free_tier: true
-tone_instructions: 'Будь строгим и техничным. Указывай на все проблемы, включая мелкие. Это Tauri 2 desktop IDE (Rust + React 19 + TypeScript). Безопасность и типобезопасность Tauri bridge критичны.'
+tone_instructions: 'Будь строгим и техничным. Указывай на все проблемы, включая мелкие. Это Tauri 2 desktop Workspace (Rust + React 19 + TypeScript). Безопасность и типобезопасность Tauri bridge критичны.'
 
 reviews:
   profile: 'assertive'
