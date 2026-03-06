@@ -36,16 +36,20 @@ const storageAdapter = {
   },
 };
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    storage: storageAdapter,
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: false, // We handle deep links manually
-  },
-});
+// Guard: Supabase SDK throws on empty URL — gracefully degrade in tests/dev
+export const supabase = SUPABASE_URL
+  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        storage: storageAdapter,
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: false, // We handle deep links manually
+      },
+    })
+  : (null as unknown as ReturnType<typeof createClient>);
 
 export async function getSession(): Promise<{ session: Session | null; user: User | null }> {
+  if (!supabase) return { session: null, user: null };
   const { data } = await supabase.auth.getSession();
   return {
     session: data.session,
@@ -54,10 +58,12 @@ export async function getSession(): Promise<{ session: Session | null; user: Use
 }
 
 export function signInWithEmail(email: string, password: string) {
+  if (!supabase) return Promise.resolve({ data: { session: null, user: null }, error: null });
   return supabase.auth.signInWithPassword({ email, password });
 }
 
 export async function signInWithOAuth(provider: "github" | "google") {
+  if (!supabase) return { url: null, error: null };
   // Generate OAuth URL — user opens it in external browser
   // Supabase PKCE flow handles state/verifier internally
   const { data, error } = await supabase.auth.signInWithOAuth({
@@ -75,6 +81,7 @@ export async function signInWithOAuth(provider: "github" | "google") {
 }
 
 export function signOut() {
+  if (!supabase) return Promise.resolve({ error: null });
   return supabase.auth.signOut();
 }
 

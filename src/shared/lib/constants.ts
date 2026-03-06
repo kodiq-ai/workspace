@@ -13,10 +13,11 @@ export const CLI_INSTALL_URLS: Record<string, string> = {
 };
 
 // ── Academy ─────────────────────────────────────────────
-export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-export const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+export const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL ?? "";
+export const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY ?? "";
 // Supabase storage key used by web app (sb-{project-ref}-auth-token)
-export const SUPABASE_STORAGE_KEY = `sb-${new URL(SUPABASE_URL).hostname.split(".")[0]}-auth-token`;
+const supabaseRef = SUPABASE_URL ? new URL(SUPABASE_URL).hostname.split(".")[0] : "unknown";
+export const SUPABASE_STORAGE_KEY = `sb-${supabaseRef}-auth-token`;
 export const ACADEMY_URL = "https://kodiq.ai/academy";
 export const FEED_URL = "https://kodiq.ai/feed";
 
