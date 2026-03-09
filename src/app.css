@@ -101,13 +101,17 @@ body {
 body::after {
   content: "";
   position: fixed;
-  inset: 0;
+  inset: -60px;
   background: radial-gradient(
-    ellipse 100% 60% at 50% 0%,
+    ellipse 140% 90% at 50% 0%,
     rgba(196, 168, 130, 0.14) 0%,
-    rgba(196, 168, 130, 0.06) 40%,
-    transparent 80%
+    rgba(196, 168, 130, 0.11) 15%,
+    rgba(196, 168, 130, 0.08) 30%,
+    rgba(196, 168, 130, 0.05) 50%,
+    rgba(196, 168, 130, 0.02) 70%,
+    transparent 100%
   );
+  filter: blur(60px);
   pointer-events: none;
   z-index: 0;
 }
@@ -175,6 +179,39 @@ body::after {
 
 .xterm-container .xterm-cursor-layer {
   z-index: 1;
+}
+
+/* ─── Splash ───────────────────────────────────────────────────────────────── */
+
+@keyframes splash-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+.splash-pulse {
+  animation: splash-pulse 2s ease-in-out infinite;
+}
+.splash-overlay {
+  background: #08080a;
+}
+.splash-overlay::before {
+  content: "";
+  position: absolute;
+  inset: -60px;
+  background: radial-gradient(
+    ellipse 140% 90% at 50% 0%,
+    rgba(196, 168, 130, 0.14) 0%,
+    rgba(196, 168, 130, 0.11) 15%,
+    rgba(196, 168, 130, 0.08) 30%,
+    rgba(196, 168, 130, 0.05) 50%,
+    rgba(196, 168, 130, 0.02) 70%,
+    transparent 100%
+  );
+  filter: blur(60px);
 }
 
 /* ─── Animations ────────────────────────────────────────────────────────────── */

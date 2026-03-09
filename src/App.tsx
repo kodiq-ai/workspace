@@ -491,17 +491,47 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ─── Layout ─────────────────────────────────────────────────────────
+  // ─── Splash fade-out ────────────────────────────────────────────────
 
-  // Prevent flash: don't render until DB hydration + project restore are done
-  if (!appReady) {
-    return <div className="flex h-screen w-screen flex-col" />;
-  }
+  const [splashDone, setSplashDone] = useState(false);
+  const [splashFading, setSplashFading] = useState(false);
+
+  useEffect(() => {
+    if (appReady && !splashFading) {
+      // Start fade-out after first paint of the content beneath
+      requestAnimationFrame(() => setSplashFading(true));
+    }
+  }, [appReady, splashFading]);
+
+  // ─── Layout ─────────────────────────────────────────────────────────
 
   // Auth Gate — require sign-in before accessing workspace
   // Skipped in e2e tests (Playwright sets VITE_E2E=true via webServer.env)
-  if (!isAuthenticated && !import.meta.env.VITE_E2E) {
-    return <AuthScreen />;
+  if (appReady && !isAuthenticated && !import.meta.env.VITE_E2E) {
+    return (
+      <>
+        <AuthScreen />
+        {!splashDone && (
+          <div
+            className={cn(
+              "splash-overlay fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-500",
+              splashFading ? "opacity-0" : "opacity-100",
+            )}
+            onTransitionEnd={() => setSplashDone(true)}
+          >
+            <KodiqLogo height={56} className="splash-pulse text-k-text-tertiary" />
+          </div>
+        )}
+      </>
+    );
+  }
+
+  if (!appReady) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center">
+        <KodiqLogo height={56} className="splash-pulse text-k-text-tertiary" />
+      </div>
+    );
   }
 
   // URL for current web mode (used by persistent WebView)
@@ -727,6 +757,19 @@ export default function App() {
 
       {/* Global Status Bar — only in developer mode */}
       {appMode === "developer" && projectPath && <EditorStatusBar />}
+
+      {/* Splash fade-out overlay */}
+      {!splashDone && (
+        <div
+          className={cn(
+            "fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-500",
+            splashFading ? "opacity-0" : "opacity-100",
+          )}
+          onTransitionEnd={() => setSplashDone(true)}
+        >
+          <KodiqLogo height={56} className="splash-pulse text-k-text-tertiary" />
+        </div>
+      )}
     </div>
   );
 }
