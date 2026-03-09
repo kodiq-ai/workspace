@@ -1,6 +1,7 @@
 // ── Update Badge ─────────────────────────────────────────────────────────────
 import { useEffect, useState } from "react";
 import { useAppStore } from "@/store";
+import { t } from "@shared/i18n";
 import { isTauri } from "@shared/lib/tauri";
 
 interface UpdateBadgeProps {
@@ -40,7 +41,7 @@ export function UpdateBadge({ onClick }: UpdateBadgeProps) {
 
   return (
     <span className="text-k-text-tertiary px-1.5 text-[10px] font-medium tracking-wide">
-      Workspace v{currentVersion}
+      {t("appLabel")} v{currentVersion}
     </span>
   );
 }
