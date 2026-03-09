@@ -499,7 +499,8 @@ export default function App() {
   }
 
   // Auth Gate — require sign-in before accessing workspace
-  if (!isAuthenticated) {
+  // Skipped in e2e tests (Playwright sets VITE_E2E=true via webServer.env)
+  if (!isAuthenticated && !import.meta.env.VITE_E2E) {
     return <AuthScreen />;
   }
 
