@@ -1,7 +1,7 @@
 // ── Profile Button ──────────────────────────────────────────────────────────
 // Sidebar profile button — shows auth state with avatar + name/email.
 
-import { User, LogOut, LogIn } from "lucide-react";
+import { User, LogOut, LogIn, ChevronUp } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { t } from "@/lib/i18n";
@@ -48,13 +48,14 @@ export function ProfileButton() {
         <DropdownMenuTrigger asChild>
           <button
             className={cn(
-              "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left",
+              "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left outline-none",
               "text-k-text-tertiary hover:text-k-text-secondary transition-colors hover:bg-white/[0.04]",
             )}
             aria-label={t("signIn")}
           >
             <User className="size-4 shrink-0" />
-            <span className="truncate text-[11px]">{t("signIn")}</span>
+            <span className="min-w-0 flex-1 truncate text-[11px]">{t("signIn")}</span>
+            <ChevronUp className="size-3 shrink-0 opacity-50" />
           </button>
         </DropdownMenuTrigger>
 
@@ -73,7 +74,7 @@ export function ProfileButton() {
       <DropdownMenuTrigger asChild>
         <button
           className={cn(
-            "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left",
+            "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left outline-none",
             "text-k-text-tertiary hover:text-k-text-secondary transition-colors hover:bg-white/[0.04]",
           )}
           aria-label={t("profile")}
@@ -84,7 +85,10 @@ export function ProfileButton() {
               {getInitials(fullName, email)}
             </AvatarFallback>
           </Avatar>
-          <span className="text-k-text-secondary truncate text-[11px]">{fullName || email}</span>
+          <span className="text-k-text-secondary min-w-0 flex-1 truncate text-[11px]">
+            {fullName || email}
+          </span>
+          <ChevronUp className="size-3 shrink-0 opacity-50" />
         </button>
       </DropdownMenuTrigger>
 
