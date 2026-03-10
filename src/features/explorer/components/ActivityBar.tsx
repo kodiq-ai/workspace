@@ -7,7 +7,6 @@ import {
   GitBranch,
   Settings,
   MonitorSmartphone,
-  GraduationCap,
 } from "lucide-react";
 import { fs } from "@shared/lib/tauri";
 import { useAppStore, type FileEntry, type SidebarTab } from "@/lib/store";
@@ -21,7 +20,6 @@ import { ProjectOverview } from "@/components/ProjectOverview";
 import { ActivityPanel } from "@features/activity/components/ActivityPanel";
 import { GitPanel } from "@features/git/components/GitPanel";
 import { SshConnectionList } from "@features/ssh/components/SshConnectionList";
-import { ChatPanel } from "@features/chat/components/ChatPanel";
 import { Loader } from "@/components/Loader";
 import { t } from "@/lib/i18n";
 
@@ -114,7 +112,6 @@ export function ActivityBar() {
             {sidebarTab === "project" && t("projectInfo")}
             {sidebarTab === "git" && t("gitSourceControl")}
             {sidebarTab === "ssh" && t("sshRemote")}
-            {sidebarTab === "chat" && t("mentorTitle")}
           </span>
         </div>
 
@@ -139,7 +136,6 @@ export function ActivityBar() {
           {sidebarTab === "project" && <ProjectOverview />}
           {sidebarTab === "git" && <GitPanel />}
           {sidebarTab === "ssh" && <SshConnectionList />}
-          {sidebarTab === "chat" && <ChatPanel />}
         </div>
       </div>
 
@@ -174,12 +170,6 @@ export function ActivityBar() {
           label={t("sshRemote")}
           active={sidebarOpen && sidebarTab === "ssh"}
           onClick={() => handleIconClick("ssh")}
-        />
-        <ActivityIcon
-          icon={GraduationCap}
-          label={t("mentor")}
-          active={sidebarOpen && sidebarTab === "chat"}
-          onClick={() => handleIconClick("chat")}
         />
         <ActivityIcon
           icon={Settings}

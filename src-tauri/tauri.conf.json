@@ -12,6 +12,7 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "Kodiq",
         "width": 1400,
         "height": 900,
@@ -22,7 +23,22 @@
         "decorations": true,
         "titleBarStyle": "Overlay",
         "hiddenTitle": true,
-        "transparent": false
+        "transparent": false,
+        "visible": false,
+        "backgroundColor": "#08080a"
+      },
+      {
+        "label": "splash",
+        "url": "/splash.html",
+        "width": 420,
+        "height": 260,
+        "resizable": false,
+        "center": true,
+        "decorations": false,
+        "transparent": false,
+        "alwaysOnTop": true,
+        "backgroundColor": "#08080a",
+        "shadow": false
       }
     ],
     "security": {

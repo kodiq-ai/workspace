@@ -23,6 +23,7 @@ export interface PreviewSlice {
   colorScheme: ColorScheme;
   webviewReady: boolean;
   webviewBounds: PreviewBounds | null;
+  panelDragging: boolean;
 
   // -- Server State ───────────────────────────────────────
   serverId: string | null;
@@ -38,6 +39,7 @@ export interface PreviewSlice {
   takeScreenshot: () => Promise<string | null>;
   setWebviewReady: (ready: boolean) => void;
   updateWebviewBounds: (bounds: PreviewBounds) => void;
+  setPanelDragging: (dragging: boolean) => void;
   destroyWebview: () => void;
 
   // -- DevTools State ─────────────────────────────────────
@@ -82,6 +84,7 @@ export const createPreviewSlice: StateCreator<PreviewSlice, [], [], PreviewSlice
   colorScheme: "dark",
   webviewReady: false,
   webviewBounds: null,
+  panelDragging: false,
 
   // -- Server Defaults ───────────────────────────────────
   serverId: null,
@@ -140,7 +143,23 @@ export const createPreviewSlice: StateCreator<PreviewSlice, [], [], PreviewSlice
 
   updateWebviewBounds: (bounds) => {
     set({ webviewBounds: bounds });
+    // Skip Rust resize during panel drag — webview is hidden off-screen
+    if (get().panelDragging) return;
     preview.resize(bounds).catch((e) => console.error("[Preview] resize:", e));
+  },
+
+  setPanelDragging: (dragging) => {
+    set({ panelDragging: dragging });
+    if (dragging) {
+      // Move native webview off-screen so it doesn't capture mouse events
+      preview.resize({ x: -9999, y: -9999, width: 0, height: 0 }).catch(() => {});
+    } else {
+      // Restore to stored bounds after drag
+      requestAnimationFrame(() => {
+        const bounds = get().webviewBounds;
+        if (bounds) preview.resize(bounds).catch(() => {});
+      });
+    }
   },
 
   destroyWebview: () => {
