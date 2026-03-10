@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { open } from "@tauri-apps/plugin-dialog";
+import { getCurrentWebviewWindow, WebviewWindow } from "@tauri-apps/api/webviewWindow";
 
 import { toast } from "sonner";
 import { useAppStore, type FileEntry } from "@/lib/store";
@@ -32,6 +33,7 @@ import { UpdateDialog } from "@features/settings/components/UpdateDialog";
 import { useUpdateChecker } from "@features/settings/hooks/useUpdateChecker";
 import { SshStatusBadge, SshPasswordPrompt } from "@features/ssh";
 import { BugReportDialog } from "@features/feedback/components/BugReportDialog";
+import { ChatPanel } from "@features/chat/components/ChatPanel";
 import { Bug, GraduationCap } from "lucide-react";
 import { ModeSwitcher, WebSection, AuthScreen } from "@features/academy";
 
@@ -63,8 +65,10 @@ export default function App() {
   const setBugReportOpen = useAppStore((s) => s.setBugReportOpen);
   const appMode = useAppStore((s) => s.appMode);
   const isAuthenticated = useAppStore((s) => s.isAuthenticated);
-  const setSidebarOpen = useAppStore((s) => s.setSidebarOpen);
-  const setSidebarTab = useAppStore((s) => s.setSidebarTab);
+  const mentorOpen = useAppStore((s) => s.mentorOpen);
+  const mentorWidth = useAppStore((s) => s.mentorWidth);
+  const toggleMentor = useAppStore((s) => s.toggleMentor);
+  const setMentorWidth = useAppStore((s) => s.setMentorWidth);
 
   const { checkForUpdate } = useUpdateChecker();
   const [defaultShell, setDefaultShell] = useState("");
@@ -72,6 +76,7 @@ export default function App() {
   const [updateDialogOpen, setUpdateDialogOpen] = useState(false);
 
   const { panelsRef, isDragging, startDrag } = useSplitDrag();
+  const setPanelDragging = useAppStore((s) => s.setPanelDragging);
   const {
     containerRef: verticalRef,
     isDragging: isVDragging,
@@ -298,6 +303,49 @@ export default function App() {
   // ── Keyboard shortcuts ─────────────────────────────────────────────────
   useKeyboardShortcuts({ spawnTab, closeTab, reopenTab });
 
+  // ── Hide native preview webview during drag ────────────────────────
+  useEffect(() => {
+    if (!previewOpen) return;
+    if (isDragging) {
+      setPanelDragging(true);
+    }
+    return () => {
+      if (isDragging) {
+        setPanelDragging(false);
+      }
+    };
+  }, [isDragging, previewOpen, setPanelDragging]);
+
+  // ── Mentor panel resize ──────────────────────────────────────────────
+  const [isMentorDragging, setIsMentorDragging] = useState(false);
+  const mentorDragRef = useRef<{ startX: number; startWidth: number } | null>(null);
+
+  useEffect(() => {
+    if (!isMentorDragging) return;
+    const move = (e: MouseEvent) => {
+      if (!mentorDragRef.current) return;
+      const delta = mentorDragRef.current.startX - e.clientX;
+      setMentorWidth(mentorDragRef.current.startWidth + delta);
+    };
+    const up = () => setIsMentorDragging(false);
+    document.addEventListener("mousemove", move);
+    document.addEventListener("mouseup", up);
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+    return () => {
+      document.removeEventListener("mousemove", move);
+      document.removeEventListener("mouseup", up);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+  }, [isMentorDragging, setMentorWidth]);
+
+  const startMentorDrag = (e: React.MouseEvent) => {
+    e.preventDefault();
+    mentorDragRef.current = { startX: e.clientX, startWidth: mentorWidth };
+    setIsMentorDragging(true);
+  };
+
   // ── Init: detect CLI tools, hydrate from DB, restore project ──────
   useEffect(() => {
     const init = async () => {
@@ -356,6 +404,19 @@ export default function App() {
         // No cached session — user will see AuthScreen
       }
 
+      // 3d. Restore mentor panel state from DB
+      try {
+        const dbMentorOpen = await db.settings.get("mentorOpen");
+        const dbMentorWidth = await db.settings.get("mentorWidth");
+        const state: Record<string, unknown> = {};
+        if (dbMentorOpen !== null) state.mentorOpen = dbMentorOpen === "true";
+        if (dbMentorWidth !== null)
+          state.mentorWidth = Math.max(280, Math.min(600, Number(dbMentorWidth)));
+        if (Object.keys(state).length > 0) useAppStore.setState(state);
+      } catch {
+        // DB not ready — defaults used
+      }
+
       // 4. Restore last project (DB first → localStorage fallback)
       let lastPath: string | null = null;
       try {
@@ -370,6 +431,13 @@ export default function App() {
         openProject(lastPath);
       }
       setAppReady(true);
+      // Show main window and close splash
+      getCurrentWebviewWindow()
+        .show()
+        .catch(() => {});
+      WebviewWindow.getByLabel("splash")
+        .then((w) => w?.close())
+        .catch(() => {});
     };
     init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -491,17 +559,47 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ─── Layout ─────────────────────────────────────────────────────────
+  // ─── Splash fade-out ────────────────────────────────────────────────
 
-  // Prevent flash: don't render until DB hydration + project restore are done
-  if (!appReady) {
-    return <div className="flex h-screen w-screen flex-col" />;
-  }
+  const [splashDone, setSplashDone] = useState(false);
+  const [splashFading, setSplashFading] = useState(false);
+
+  useEffect(() => {
+    if (appReady && !splashFading) {
+      // Start fade-out after first paint of the content beneath
+      requestAnimationFrame(() => setSplashFading(true));
+    }
+  }, [appReady, splashFading]);
+
+  // ─── Layout ─────────────────────────────────────────────────────────
 
   // Auth Gate — require sign-in before accessing workspace
   // Skipped in e2e tests (Playwright sets VITE_E2E=true via webServer.env)
-  if (!isAuthenticated && !import.meta.env.VITE_E2E) {
-    return <AuthScreen />;
+  if (appReady && !isAuthenticated && !import.meta.env.VITE_E2E) {
+    return (
+      <>
+        <AuthScreen />
+        {!splashDone && (
+          <div
+            className={cn(
+              "splash-overlay fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-500",
+              splashFading ? "opacity-0" : "opacity-100",
+            )}
+            onTransitionEnd={() => setSplashDone(true)}
+          >
+            <KodiqLogo height={56} className="splash-pulse text-k-text-tertiary" />
+          </div>
+        )}
+      </>
+    );
+  }
+
+  if (!appReady) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center">
+        <KodiqLogo height={56} className="splash-pulse text-k-text-tertiary" />
+      </div>
+    );
   }
 
   // URL for current web mode (used by persistent WebView)
@@ -577,12 +675,12 @@ export default function App() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => {
-                  setSidebarOpen(true);
-                  setSidebarTab("chat");
-                }}
-                aria-label={t("mentor")}
-                className="border-k-border text-k-text-tertiary hover:text-k-text-secondary h-7 gap-1.5 rounded-md px-3 text-xs font-medium"
+                onClick={toggleMentor}
+                aria-label={mentorOpen ? "hide mentor" : "show mentor"}
+                className={cn(
+                  "border-k-border text-k-text-tertiary hover:text-k-text-secondary h-7 gap-1.5 rounded-md px-3 text-xs font-medium",
+                  mentorOpen && "border-k-accent/40 text-k-accent",
+                )}
               >
                 <GraduationCap className="h-4 w-4" />
                 {t("mentor")}
@@ -607,7 +705,11 @@ export default function App() {
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="relative flex flex-1 overflow-hidden">
+        {/* Drag overlay — prevents iframes/webviews from capturing mouse events */}
+        {(isDragging || isVDragging || isMentorDragging) && (
+          <div className="absolute inset-0 z-50" />
+        )}
         {/* Developer mode — IDE layout */}
         {appMode === "developer" && projectPath && (
           <>
@@ -699,6 +801,39 @@ export default function App() {
               )}
             </div>
 
+            {/* Mentor Panel — standalone resizable */}
+            {mentorOpen && (
+              <>
+                <div
+                  className="group relative w-px shrink-0 cursor-col-resize"
+                  onMouseDown={startMentorDrag}
+                >
+                  <div
+                    className={cn(
+                      "absolute inset-y-0 -left-[2px] w-[5px] transition-all",
+                      isMentorDragging
+                        ? "bg-k-accent/30"
+                        : "bg-transparent group-hover:bg-white/[0.04]",
+                    )}
+                  />
+                  <div
+                    className={cn(
+                      "absolute inset-0 transition-colors",
+                      isMentorDragging ? "bg-k-accent" : "bg-white/[0.06]",
+                    )}
+                  />
+                </div>
+                <div
+                  style={{ width: mentorWidth }}
+                  className="flex shrink-0 flex-col overflow-hidden border-l border-white/[0.06]"
+                >
+                  <ErrorBoundary name="mentor" fallbackTitle={t("mentorTitle")}>
+                    <ChatPanel />
+                  </ErrorBoundary>
+                </div>
+              </>
+            )}
+
             {/* Activity Bar + Side Panel — right side */}
             <ErrorBoundary name="explorer" fallbackTitle={t("fileTreeError")}>
               <ActivityBar />
@@ -727,6 +862,19 @@ export default function App() {
 
       {/* Global Status Bar — only in developer mode */}
       {appMode === "developer" && projectPath && <EditorStatusBar />}
+
+      {/* Splash fade-out overlay */}
+      {!splashDone && (
+        <div
+          className={cn(
+            "fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-500",
+            splashFading ? "opacity-0" : "opacity-100",
+          )}
+          onTransitionEnd={() => setSplashDone(true)}
+        >
+          <KodiqLogo height={56} className="splash-pulse text-k-text-tertiary" />
+        </div>
+      )}
     </div>
   );
 }

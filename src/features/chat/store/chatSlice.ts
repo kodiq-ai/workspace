@@ -3,9 +3,11 @@
 
 import type { StateCreator } from "zustand";
 import type { ChatMessage } from "@shared/lib/types";
-import { chat } from "@shared/lib/tauri";
+import { chat, db } from "@shared/lib/tauri";
 import { getSession } from "@shared/lib/supabase";
+import { trackEvent } from "@shared/lib/analytics";
 import { sendMentorMessage } from "../lib/mentorApi";
+import { t } from "@shared/i18n";
 
 export interface ChatSlice {
   // State
@@ -14,12 +16,16 @@ export interface ChatSlice {
   chatStreamingContent: string;
   chatThinkingContent: string;
   chatError: string | null;
+  mentorOpen: boolean;
+  mentorWidth: number;
 
   // Actions
   chatSendMessage: (prompt: string, projectId: string) => Promise<void>;
   chatStopStreaming: () => void;
   chatLoadHistory: (projectId: string) => Promise<void>;
   chatClearHistory: (projectId: string) => Promise<void>;
+  toggleMentor: () => void;
+  setMentorWidth: (width: number) => void;
 }
 
 // AbortController lives outside store to avoid serialization issues
@@ -31,16 +37,11 @@ export const createChatSlice: StateCreator<ChatSlice, [], [], ChatSlice> = (set,
   chatStreamingContent: "",
   chatThinkingContent: "",
   chatError: null,
+  mentorOpen: false,
+  mentorWidth: 380,
 
   chatSendMessage: async (prompt, projectId) => {
-    // Get auth token
-    const { session } = await getSession();
-    if (!session?.access_token) {
-      set({ chatError: "mentorSignInRequired" });
-      return;
-    }
-
-    // Add user message immediately
+    // Add user message immediately (before auth check — so it's always visible)
     const userMsg: ChatMessage = {
       id: crypto.randomUUID(),
       project_id: projectId,
@@ -57,6 +58,27 @@ export const createChatSlice: StateCreator<ChatSlice, [], [], ChatSlice> = (set,
       chatThinkingContent: "",
       chatError: null,
     }));
+
+    // Get auth token — try Supabase SDK first, fall back to store session
+    let accessToken: string | undefined;
+    try {
+      const { session } = await getSession();
+      accessToken = session?.access_token;
+    } catch {
+      // Supabase SDK failed — try store
+    }
+    if (!accessToken) {
+      // Fallback: use session from academy store (already authenticated via AuthScreen)
+      const storeSession = (get() as unknown as Record<string, unknown>).academySession as
+        | { access_token?: string }
+        | null
+        | undefined;
+      accessToken = storeSession?.access_token;
+    }
+    if (!accessToken) {
+      set({ chatStreaming: false, chatError: t("mentorSignInRequired") });
+      return;
+    }
 
     // Persist user message
     try {
@@ -77,7 +99,7 @@ export const createChatSlice: StateCreator<ChatSlice, [], [], ChatSlice> = (set,
     try {
       await sendMentorMessage(
         prompt,
-        session.access_token,
+        accessToken,
         {
           onToken: (text) => {
             set((s) => ({
@@ -194,5 +216,21 @@ export const createChatSlice: StateCreator<ChatSlice, [], [], ChatSlice> = (set,
     } catch (e) {
       console.error("[Chat] clear history:", e);
     }
+  },
+
+  toggleMentor: () =>
+    set((s) => {
+      const next = !s.mentorOpen;
+      db.settings.set("mentorOpen", String(next)).catch((e) => console.error("[DB] setting:", e));
+      if (next) {
+        trackEvent("feature_used", { feature: "mentor" });
+      }
+      return { mentorOpen: next };
+    }),
+
+  setMentorWidth: (width) => {
+    const clamped = Math.max(280, Math.min(600, width));
+    set({ mentorWidth: clamped });
+    db.settings.set("mentorWidth", String(clamped)).catch((e) => console.error("[DB] setting:", e));
   },
 });

@@ -344,6 +344,10 @@
   "chatCopyCode": "Копировать",
   "chatCodeCopied": "Код скопирован",
 
+  "voiceStart": "Голосовой ввод",
+  "voiceStop": "Остановить запись",
+  "voiceListening": "Слушаю…",
+
   "reportBug": "Сообщить об ошибке",
   "bugReportTitle": "Обратная связь",
   "bugReportDesc": "Сообщите об ошибке, предложите улучшение или поделитесь идеей",

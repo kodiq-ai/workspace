@@ -344,6 +344,10 @@
   "chatCopyCode": "Copy",
   "chatCodeCopied": "Code copied",
 
+  "voiceStart": "Voice input",
+  "voiceStop": "Stop listening",
+  "voiceListening": "Listening…",
+
   "reportBug": "Report a bug",
   "bugReportTitle": "Feedback",
   "bugReportDesc": "Report a bug, suggest an improvement, or share an idea",

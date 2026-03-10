@@ -6,6 +6,10 @@
   "permissions": [
     "core:default",
     "core:window:allow-start-dragging",
+    "core:window:allow-show",
+    "core:window:allow-close",
+    "core:window:allow-destroy",
+    "core:webview:allow-webview-close",
     "shell:allow-spawn",
     "shell:allow-stdin-write",
     "shell:allow-kill",
